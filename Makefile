@@ -11,4 +11,4 @@ test:
 
 check: test
 	cd src/backend && go vet ./...
-	cd src/frontend && bun run lint && bun run typecheck && bun run build
+	cd src/frontend && bun run format:check && bun run lint && bun run typecheck && bun run build

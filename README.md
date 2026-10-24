@@ -47,7 +47,7 @@ For Next.js overrides copy src/frontend/.env.example to src/frontend/.env.local.
 make check
 ```
 
-Runs Go integration tests with the race detector, go vet, ESLint, TypeScript and the production Next.js build. GitHub Actions runs equivalent checks.
+Runs Go integration tests with the race detector, go vet, Oxlint, Oxfmt, TypeScript and the production Next.js build. GitHub Actions runs equivalent checks.
 
 ## Layout
 
@@ -68,3 +68,7 @@ This starter is intended for local use. Add authentication and authorization bef
 ## License
 
 MIT
+
+## Frontend tooling
+
+From `src/frontend`, run `bun run lint` for Oxlint, `bun run lint:fix` for fixes, `bun run format` for Oxfmt, and `bun run format:check` to check formatting. TypeScript strict mode and `bun run typecheck` check types separately. Bun is the package manager; commit bun.lock when dependencies change.

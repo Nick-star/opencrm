@@ -13,6 +13,7 @@ Read README.md for setup and docs/architecture.md before changing boundaries or 
 For Go changes, use the Modern Go Guidelines CLI when available and apply guidance for the version in src/backend/go.mod.
 Use Server Components by default; introduce client components at interactive boundaries.
 Add shared UI through the shadcn CLI and preserve accessible labels, focus states and error feedback.
+Use Bun for frontend dependencies, Oxlint for linting and Oxfmt for formatting. Add validation libraries such as Zod when a concrete validation boundary needs them.
 Change the API contract and its TypeScript types together.
 Before finishing, run `make check`; add behavior tests for validation, persistence and domain rules that change.
 Update setup documentation when commands or environment variables change. Keep secrets and SQLite files outside Git.
