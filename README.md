@@ -6,7 +6,7 @@ The first vertical slice is functional: create a customer, validate input, store
 
 ## Run locally
 
-Requirements: Go 1.26+, Node.js 22.15+ and Bun 1.2.21+. SQLite uses a pure-Go driver; a system SQLite installation is unnecessary.
+Requirements: Go 1.26+, Node.js 22.15+ and Bun 1.4.4+. SQLite uses a pure-Go driver; a system SQLite installation is unnecessary.
 
 ```sh
 cd src/backend
