@@ -21,10 +21,12 @@ func TestCustomerLifecycle(t *testing.T) {
 	request := func(method, body string) *httptest.ResponseRecorder {
 		t.Helper()
 		recorder := httptest.NewRecorder()
-		handler.ServeHTTP(recorder, httptest.NewRequest(method, "/api/v1/customers", strings.NewReader(body)))
+		r := httptest.NewRequest(method, "/api/v1/customers", strings.NewReader(body))
+		r.Header.Set("Content-Type", "application/json")
+		handler.ServeHTTP(recorder, r)
 		return recorder
 	}
-	if got := request(http.MethodGet, ""); got.Code != 200 || strings.TrimSpace(got.Body.String()) != "[]" {
+	if got := request(http.MethodGet, ""); got.Code != 200 || !strings.Contains(got.Body.String(), `"items":[]`) {
 		t.Fatalf("empty list: %s", got.Body.String())
 	}
 	for _, body := range []string{`{}`, `{"name":"Ada","email":"invalid"}`, `{"name":"Ada","email":"ada@example.com"} {}`} {
@@ -46,10 +48,13 @@ func TestCustomerLifecycle(t *testing.T) {
 	defer db.Close()
 	handler = Handler(db)
 	got = request(http.MethodGet, "")
-	var customers []store.Customer
-	if err := json.Unmarshal(got.Body.Bytes(), &customers); err != nil {
+	var result struct {
+		Items []customerDTO `json:"items"`
+	}
+	if err := json.Unmarshal(got.Body.Bytes(), &result); err != nil {
 		t.Fatal(err)
 	}
+	customers := result.Items
 	if len(customers) != 1 || customers[0].Name != "Ada" || customers[0].ID == 0 || customers[0].CreatedAt == "" {
 		t.Fatalf("persisted customers: %+v", customers)
 	}

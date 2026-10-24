@@ -33,8 +33,20 @@ jobs:
       - uses: oven-sh/setup-bun@v2
         with:
           bun-version: 1.4.4
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: src/backend/go.mod
+          cache-dependency-path: src/backend/go.sum
       - run: bun install --frozen-lockfile
       - run: bun run format:check
       - run: bun run lint
       - run: bun run typecheck
       - run: bun run build
+      - run: bun x playwright install --with-deps chromium
+      - run: bun run test:e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-results
+          path: src/frontend/test-results/
+          retention-days: 7

@@ -1,31 +1,33 @@
 # Architecture
 
-Browser → Next.js `/api/v1/*` rewrite → Go HTTP API → SQLite.
+OpenCRM is a local, single-owner sales workspace. Browser → Next.js → Go HTTP API → SQLite.
 
-Go runs as one process. The standard library HTTP router uses method-aware routes.
-The store embeds the initial schema and initializes SQLite with WAL, foreign keys and a busy timeout.
-A single database connection serializes writes; this is a deliberate starting point for a small local CRM.
-The API binds to loopback by default and shuts down gracefully on SIGINT/SIGTERM.
+## Domain and application
 
-Next.js uses App Router, TypeScript, Tailwind CSS and locally owned shadcn/ui components.
-The interactive customer workspace calls the same-origin API proxy, so browser requests need no CORS configuration.
-API_ORIGIN is server-only and defaults to http://127.0.0.1:8080.
-There is no application logic or database access in Next.js.
+The Go monolith contains customer, deal and task domain packages. They own vocabulary and validation and import neither HTTP nor SQLite. See the root GLOSSARY.md.
 
-## Initial contract
+The application package coordinates writes and business rules. Each mutation runs in a SQLite transaction, including related-record checks: archiving and adding work cannot race into an invalid state. Store queries accept either a database connection or transaction through the same small executor interface. Dependencies are composed in the process entry point and HTTP handler constructor.
 
-- GET /api/v1/health — database readiness, 200 or 503.
-- GET /api/v1/customers — newest 100 customers, empty array on a fresh database.
-- POST /api/v1/customers — name, email, company; returns persisted customer with ID and timestamp (201).
-- Errors use {"error":"message"}; malformed input returns 400.
+HTTP DTOs are separate from domain entities. Only writable fields are accepted as input. Errors expose stable codes and optional field keys; SQL details are logged only on the server. Mutations require an application/json object, reject unknown fields and trailing JSON, and have a 32 KiB body limit.
 
-## Next milestones
+SQLite uses WAL, foreign keys, a busy timeout and one connection. Migration 1 is the original customer schema; migration 2 adds customer fields, deals and tasks. Initialization upgrades version 0/1 transactionally and rejects newer unsupported versions. Existing customer IDs and records are retained. Unicode case folding is provided by a deterministic Go-backed SQLite function for Russian and English search.
 
-1. Authentication, session protection and per-user access rules.
-2. Customer update/delete and pagination; versioned transactional migrations.
-3. Contacts, deal stages, activities and dashboard aggregates.
-4. OpenAPI contract, browser tests, deployment and SQLite backup/restore procedure.
+Money is stored as integer kopecks, from 0 to 1,000,000,000,000 per deal. Closed deals can be explicitly reopened to new. Customer reassignment on deals and tasks is excluded from this MVP. Archived customers retain history; restore them before editing their deals or tasks. No records are physically deleted.
 
-The initial UI describes only persisted customers. There are no artificial sales metrics or seeded records.
+Task timestamps are normalized to UTC. Calendar filters use IANA time zones and local midnight boundaries, including daylight-saving changes. Completing a deal never completes its tasks. Dashboard summaries and their task lists are read in one transaction.
 
-Development and production builds use Webpack with the standard Tailwind PostCSS plugin. This avoids Turbopack requiring an extra local socket for CSS processing in restricted environments.
+## Frontend
+
+App Router uses ru/en URL prefixes and typed dictionaries. Russian is the default. Language switching retains the route and query. Dates and RUB amounts use Intl.
+
+Server Components load initial records and aggregates directly from Go, without caching. Interactive Client Components perform mutations through the same-origin /api/v1 proxy, then refresh server-rendered data. Zod checks input and API responses; Go remains authoritative. Calendar screens resolve the browser time zone before exposing forms. Error states preserve input and provide retry controls.
+
+Webpack and the standard Tailwind PostCSS plugin are used for development and production. Bun manages dependencies; Oxlint and Oxfmt enforce linting and formatting.
+
+## Tests and local operation
+
+Go integration tests exercise HTTP behavior with temporary SQLite databases. Playwright launches real Go and Next.js processes and Chromium. Its API binary and database are built in a disposable OS temporary directory, cleaned on process exit. Test ports are 18080 and 13000; the ordinary application database is never used.
+
+The Go API and Next.js development commands bind to loopback by default. There is no authentication, multi-tenancy, notification service or external integration. Public deployment requires authentication and access controls first.
+
+See api.md for the HTTP contract and README.md for setup and verification.
