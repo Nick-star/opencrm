@@ -23,3 +23,17 @@ Update setup documentation when commands or environment variables change. Keep s
 The initial application is a local portfolio foundation without authentication or tenancy.
 Before exposing customer endpoints publicly, implement authentication, authorization and CSRF protection for the chosen session model.
 Schema changes after version 1 require ordered, transactional migrations rather than edits to the initial schema alone.
+
+## Agent skills
+
+### Issue tracker
+
+Track issues and specs in GitHub Issues. See `docs/agents/issue-tracker.md`.
+
+### Triage labels
+
+Use the five canonical triage labels. See `docs/agents/triage-labels.md`.
+
+### Domain docs
+
+Use a single-context domain layout. See `docs/agents/domain.md`.
